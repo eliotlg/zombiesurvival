@@ -230,15 +230,23 @@ function meta:FireOutput(outpt, activator, caller, args)
 	end
 end
 
+local function ExplodeWithFallback(value, ...)
+	for _, delim in ipairs({...}) do
+		local tab = string.Explode(delim, value)
+		if #tab > 1 then
+			return tab
+		end
+	end
+
+	return {value}
+end
+
 function meta:AddOnOutput(key, value)
 	self[key] = self[key] or {}
 
-	-- Newer Source Engine games use this symbol as a delimiter
-	local tab = string.Explode("\x1B", value)
-	-- Fall back to comma-delimited array when necessary
-	if (#tab < 2) then
-		tab = string.Explode(",", value)
-	end
+	-- Newer Source Engine games use the escape character as a delimiter.
+	-- Keep comma support for older Hammer-format entity outputs.
+	local tab = ExplodeWithFallback(value, "\x1B", ",")
 
 	table.insert(self[key], {entityname=tab[1], input=tab[2], args=tab[3], delay=tab[4], reps=tab[5]})
 end
